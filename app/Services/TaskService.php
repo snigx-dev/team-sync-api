@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendTaskAssignedNotification;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -101,6 +102,12 @@ class TaskService
             'assignee_id' => $data['assignee_id'] ?? null,
         ]);
 
+        // Send notification if task is assigned during creation
+        if (isset($data['assignee_id']) && $data['assignee_id'] !== $user->id) {
+            $task->load('assignee');
+            SendTaskAssignedNotification::dispatch($task, $task->assignee);
+        }
+
         return $task->load([
             'creator:id,name,email',
             'assignee:id,name,email',
@@ -149,7 +156,14 @@ class TaskService
      */
     public function assignTask(Task $task, int $assigneeId): Task
     {
+        $oldAssigneeId = $task->assignee_id;
         $task->update(['assignee_id' => $assigneeId]);
+
+        // Send notification if assignee changed
+        if ($oldAssigneeId !== $assigneeId) {
+            $task->load('assignee');
+            SendTaskAssignedNotification::dispatch($task, $task->assignee);
+        }
 
         return $task->fresh([
             'creator:id,name,email',
