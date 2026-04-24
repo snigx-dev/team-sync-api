@@ -54,7 +54,7 @@ class SendTaskAssignedNotification implements ShouldQueue
      */
     public function handle(): void
     {
-        // Send notification to assignee
+        // Send notification to the assignee
         $this->assignee->notify(new TaskAssignedNotification($this->task));
 
         \Log::info('Task assignment notification sent', [
