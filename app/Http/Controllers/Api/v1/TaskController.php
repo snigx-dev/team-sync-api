@@ -38,6 +38,9 @@ class TaskController extends V1BaseController
             $request->user()
         );
 
+        // Dispatch the event
+        TaskCreated::dispatch($task);
+
         return $this->apiResponse(new TaskResource($task), 'Task created successfully', 201);
     }
 

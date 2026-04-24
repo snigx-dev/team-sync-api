@@ -9,6 +9,7 @@ use App\Http\Resources\v1\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Events\UserRegistered;
 
 class AuthController extends V1BaseController
 {
@@ -21,8 +22,13 @@ class AuthController extends V1BaseController
      */
     public function register(RegisterRequest $request): JsonResponse
     {
+        // Register the user
         $result = $this->authService->register($request->validated());
 
+        // Dispatch the UserRegistered event
+        UserRegistered::dispatch($result['user']);
+
+        // Return a success response
         return $this->apiResponse([
             'user' => new UserResource($result['user']),
             'token' => $result['token'],
